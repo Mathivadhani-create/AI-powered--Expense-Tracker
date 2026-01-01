@@ -1,29 +1,44 @@
 import streamlit as st
 import pickle
+import os
 
-# Load model
-with open("expense_model.pkl", "rb") as model_file:
-    model = pickle.load(model_file)
+# File paths
+MODEL_FILE = "expense_model.pkl"
+VECTORIZER_FILE = "expense_vectorizer.pkl"
 
-# Load vectorizer
-with open("expense_vectorizer.pkl", "rb") as vec_file:
-    vectorizer = pickle.load(vec_file)
-
-st.title("AI-Powered Expense Tracker")
-
-st.write(
-    "Enter your expense details below, and the AI model will predict the "
-    "category for you."
+# App title (split to satisfy Flake8 line length)
+st.title(
+    "💰 AI-Powered "
+    "Expense Tracker"
 )
 
-user_input = st.text_area(
-    "Enter expense details (e.g., Rent, Groceries, Travel, etc.):"
+# Load model and vectorizer
+if os.path.exists(MODEL_FILE) and os.path.exists(VECTORIZER_FILE):
+    with open(MODEL_FILE, "rb") as model_file:
+        model = pickle.load(model_file)
+    with open(VECTORIZER_FILE, "rb") as vectorizer_file:
+        vectorizer = pickle.load(vectorizer_file)
+else:
+    st.error(
+        "Model or vectorizer not found. "
+        "Please run train_model.py first."
+    )
+    st.stop()
+
+# User input
+description = st.text_input(
+    "Enter expense description:"
 )
 
-if st.button("Predict"):
-    if user_input.strip() == "":
-        st.warning("Please enter some text to predict.")
+# Prediction
+if st.button("Predict Expense"):
+    if description.strip() == "":
+        st.warning(
+            "Please enter a description to predict expense."
+        )
     else:
-        input_vec = vectorizer.transform([user_input])
-        prediction = model.predict(input_vec)
-        st.success(f"Predicted category: {prediction[0]}")
+        desc_vector = vectorizer.transform([description])
+        predicted_amount = model.predict(desc_vector)[0]
+        st.success(
+            f"Predicted Expense Amount: ₹{predicted_amount:.2f}"
+        )
